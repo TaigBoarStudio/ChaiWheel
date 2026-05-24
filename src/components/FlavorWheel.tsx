@@ -159,8 +159,11 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
   };
 
   const handleTouchStart = (e: React.TouchEvent, isModal: boolean) => {
+    if (e.cancelable) {
+      e.preventDefault();
+    }
     if (e.touches.length === 1) {
-      handlePointerDown(e.touches[0].clientX, e.touches[0].clientY, isModal);
+      handlePointerDown(e.touches[0].clientX, e.touches[0].clientY, isModal, 0);
       setStartTouchDistance(null);
     } else if (e.touches.length === 2) {
       const touch1 = e.touches[0];
@@ -175,6 +178,9 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
   };
 
   const handleTouchMove = (e: React.TouchEvent, isModal: boolean) => {
+    if (e.cancelable) {
+      e.preventDefault();
+    }
     if (e.touches.length === 1) {
       if (startTouchDistance === null) {
         handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, isModal);
@@ -183,10 +189,10 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
       const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
-      if (dist > 10) {
+      if (dist > 5) {
         const scale = dist / startTouchDistance;
         const setZ = isModal ? setModalZoom : setZoom;
-        const newZoom = Math.min(Math.max(startTouchZoom * scale, 0.5), 6);
+        const newZoom = Math.min(Math.max(startTouchZoom * scale, 0.4), 6);
         setZ(newZoom);
       }
     }
@@ -779,97 +785,70 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-neutral-950/98 backdrop-blur-2xl z-[999] flex flex-col p-4 md:p-8 select-none"
+            className="fixed inset-0 bg-neutral-950 z-[999] flex flex-col select-none overflow-hidden w-screen h-screen touch-none"
           >
-            {/* Modal Header */}
-            <div className="w-full max-w-5xl mx-auto flex justify-end items-center pb-2 shrink-0">
+            {/* Modal Header containing only Minimize button in absolute top-right overlay style */}
+            <div className="absolute top-4 right-4 z-[1000]">
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="text-slate-400 hover:text-white hover:bg-white/5 px-4 py-2.5 rounded-xl transition-all border border-white/10 flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase font-mono shadow-md"
+                className="text-slate-300 hover:text-white bg-[#0A0B0C]/80 hover:bg-neutral-900/95 px-4 py-2.5 rounded-xl transition-all border border-white/10 flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase font-mono shadow-lg backdrop-blur-md"
               >
-                <Minimize2 className="w-4 h-4 text-emerald-400" />
+                <Minimize2 className="w-5 h-5 text-emerald-400" />
                 <span>Свернуть колесо</span>
               </button>
             </div>
 
-            {/* Modal Interactive Area */}
-            <div className="flex-1 w-full max-w-5xl mx-auto flex items-center justify-center p-4">
-              <div
-                ref={modalContainerRef}
-                className={`w-full max-w-[min(80vh,800px)] aspect-square relative bg-[#121417]/50 border border-white/5 rounded-[40px] p-6 md:p-10 shadow-3xl flex items-center justify-center overflow-hidden transition-colors duration-200 touch-none ${
-                  modalIsDragging ? "cursor-grabbing" : "cursor-grab"
-                }`}
-                onMouseDown={(e) => handlePointerDown(e.clientX, e.clientY, true, e.button)}
-                onMouseMove={(e) => handlePointerMove(e.clientX, e.clientY, true)}
-                onMouseUp={() => handlePointerUp(true)}
-                onMouseLeave={() => handlePointerUp(true)}
-                onTouchStart={(e) => handleTouchStart(e, true)}
-                onTouchMove={(e) => handleTouchMove(e, true)}
-                onTouchEnd={() => handleTouchEnd(true)}
-                onDoubleClick={() => handleResetZoom(true)}
-                title="Дважды кликните, чтобы сбросить масштаб"
-              >
-                
-                {renderWheelSVG(true)}
-
-                {/* Modal Floating Premium Zoom Control Pad */}
-                <div className="absolute bottom-6 left-6 flex items-center gap-1.5 bg-[#0A0B0C]/90 border border-white/10 p-1.5 rounded-xl backdrop-blur-md z-50 shadow-xl select-none">
-                  <button
-                    type="button"
-                    onClick={() => handleZoomIn(true)}
-                    className="p-2 hover:bg-white/10 text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer"
-                    title="Приблизить"
-                  >
-                    <ZoomIn className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleZoomOut(true)}
-                    className="p-2 hover:bg-white/10 text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer"
-                    title="Отдалить"
-                  >
-                    <ZoomOut className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleResetZoom(true)}
-                    className="p-2 hover:bg-white/10 text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer"
-                    title="Сбросить"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                  <div className="border-l border-white/15 h-5 mx-1"></div>
-                  <span className="text-xs font-mono font-bold text-slate-300 px-2.5">
-                    Масштаб {Math.round(modalZoom * 100)}%
-                  </span>
+            {/* Modal Interactive Area taking full screen without arbitrary container frames */}
+            <div
+              ref={modalContainerRef}
+              className={`w-full h-full relative flex items-center justify-center overflow-hidden touch-none ${
+                modalIsDragging ? "cursor-grabbing" : "cursor-grab"
+              }`}
+              onMouseDown={(e) => handlePointerDown(e.clientX, e.clientY, true, e.button)}
+              onMouseMove={(e) => handlePointerMove(e.clientX, e.clientY, true)}
+              onMouseUp={() => handlePointerUp(true)}
+              onMouseLeave={() => handlePointerUp(true)}
+              onTouchStart={(e) => handleTouchStart(e, true)}
+              onTouchMove={(e) => handleTouchMove(e, true)}
+              onTouchEnd={() => handleTouchEnd(true)}
+              onDoubleClick={() => handleResetZoom(true)}
+            >
+              {/* Perfectly sized responsive aspect-preserving inner container */}
+              <div className="w-[min(95vw,93vh)] h-[min(95vw,93vh)] flex items-center justify-center overflow-visible pointer-events-none">
+                <div className="w-full h-full pointer-events-auto">
+                  {renderWheelSVG(true)}
                 </div>
-
-                {/* Full screen floating Tooltip inside the big wheel view */}
-                <AnimatePresence>
-                  {hoveredItem && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute bottom-8 right-8 bg-[#0A0B0C] border border-white/10 px-5 py-3 rounded-2xl shadow-2xl text-center backdrop-blur-md pointer-events-none z-50 min-w-[240px]"
-                    >
-                      <span className="text-[10px] text-slate-500 block font-mono uppercase tracking-widest mb-1">
-                        {FLAVOR_CATEGORIES.some(c => c.name === hoveredItem) ? "Категория Ароматов" : "Вкусовая Нота"}
-                      </span>
-                      <span className="text-base text-white font-bold font-sans">
-                        {hoveredItem}
-                      </span>
-                      {!selectedTea && (
-                        <span className="block text-[10px] text-emerald-400 mt-1 font-mono uppercase tracking-wider">
-                          Нажмите для фильтрации
-                        </span>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
               </div>
+
+              {/* Minimal floating Icon Controls Overlay (no text) */}
+              <div className="absolute bottom-6 left-6 flex items-center gap-1.5 bg-[#0A0B0C]/80 border border-white/10 p-1.5 rounded-xl backdrop-blur-md z-[1000] shadow-xl select-none">
+                <button
+                  type="button"
+                  onClick={() => handleZoomIn(true)}
+                  className="p-2 hover:bg-white/10 text-emerald-400 hover:text-emerald-300 rounded-lg transition-all cursor-pointer"
+                  title="Приблизить"
+                >
+                  <ZoomIn className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleZoomOut(true)}
+                  className="p-2 hover:bg-white/10 text-emerald-400 hover:text-emerald-300 rounded-lg transition-all cursor-pointer"
+                  title="Отдалить"
+                >
+                  <ZoomOut className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleResetZoom(true)}
+                  className="p-2 hover:bg-white/10 text-emerald-400 hover:text-emerald-300 rounded-lg transition-all cursor-pointer"
+                  title="Сбросить"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+              </div>
+
             </div>
           </motion.div>
         )}
