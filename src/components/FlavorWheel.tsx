@@ -42,6 +42,10 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
   const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
   const [mouseDownTime, setMouseDownTime] = useState(0);
 
+  // Touch pinch zoom state
+  const [startTouchDistance, setStartTouchDistance] = useState<number | null>(null);
+  const [startTouchZoom, setStartTouchZoom] = useState<number>(1.2);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const modalContainerRef = useRef<HTMLDivElement>(null);
 
@@ -152,6 +156,45 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
   const handlePointerUp = (isModal: boolean) => {
     const setIsDrag = isModal ? setModalIsDragging : setIsDragging;
     setIsDrag(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, isModal: boolean) => {
+    if (e.touches.length === 1) {
+      handlePointerDown(e.touches[0].clientX, e.touches[0].clientY, isModal);
+      setStartTouchDistance(null);
+    } else if (e.touches.length === 2) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+      setStartTouchDistance(dist);
+      setStartTouchZoom(isModal ? modalZoom : zoom);
+      
+      const setIsDrag = isModal ? setModalIsDragging : setIsDragging;
+      setIsDrag(false);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent, isModal: boolean) => {
+    if (e.touches.length === 1) {
+      if (startTouchDistance === null) {
+        handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, isModal);
+      }
+    } else if (e.touches.length === 2 && startTouchDistance !== null) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+      if (dist > 10) {
+        const scale = dist / startTouchDistance;
+        const setZ = isModal ? setModalZoom : setZoom;
+        const newZoom = Math.min(Math.max(startTouchZoom * scale, 0.5), 6);
+        setZ(newZoom);
+      }
+    }
+  };
+
+  const handleTouchEnd = (isModal: boolean) => {
+    handlePointerUp(isModal);
+    setStartTouchDistance(null);
   };
 
   const isClickAction = (clientX: number, clientY: number) => {
@@ -688,24 +731,16 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
         {/* Viewport Frame Box with custom grab indicators */}
         <div
           ref={containerRef}
-          className={`relative w-full aspect-square overflow-hidden bg-[#0A0B0C]/40 rounded-2xl border border-white/5 transition-colors duration-200 mt-8 ${
+          className={`relative w-full aspect-square overflow-hidden bg-[#0A0B0C]/40 rounded-2xl border border-white/5 transition-colors duration-200 mt-8 touch-none ${
             isDragging ? "cursor-grabbing" : "cursor-grab"
           }`}
           onMouseDown={(e) => handlePointerDown(e.clientX, e.clientY, false, e.button)}
           onMouseMove={(e) => handlePointerMove(e.clientX, e.clientY, false)}
           onMouseUp={() => handlePointerUp(false)}
           onMouseLeave={() => handlePointerUp(false)}
-          onTouchStart={(e) => {
-            if (e.touches.length === 1) {
-              handlePointerDown(e.touches[0].clientX, e.touches[0].clientY, false);
-            }
-          }}
-          onTouchMove={(e) => {
-            if (e.touches.length === 1) {
-              handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, false);
-            }
-          }}
-          onTouchEnd={() => handlePointerUp(false)}
+          onTouchStart={(e) => handleTouchStart(e, false)}
+          onTouchMove={(e) => handleTouchMove(e, false)}
+          onTouchEnd={() => handleTouchEnd(false)}
           onDoubleClick={() => handleResetZoom(false)}
           title="Дважды кликните, чтобы сбросить"
         >
@@ -744,27 +779,17 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-neutral-950/98 backdrop-blur-2xl z-[999] flex flex-col justify-between p-4 md:p-8 select-none overflow-y-auto"
+            className="fixed inset-0 bg-neutral-950/98 backdrop-blur-2xl z-[999] flex flex-col p-4 md:p-8 select-none"
           >
             {/* Modal Header */}
-            <div className="w-full max-w-5xl mx-auto flex justify-between items-center border-b border-white/5 pb-4 shrink-0">
-              <div>
-                <h3 className="text-lg md:text-xl font-bold text-white flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Колесо Чайных Вкусов и Ароматов (Масштабируемый Проводник)
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Масштабируйте колесиком мыши, перетаскивайте за любое место, дважды кликните для сброса.
-                </p>
-              </div>
-              
+            <div className="w-full max-w-5xl mx-auto flex justify-end items-center pb-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="text-slate-400 hover:text-white hover:bg-white/5 px-4 py-2 rounded-xl transition-all border border-white/5 flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase font-mono shadow-sm"
+                className="text-slate-400 hover:text-white hover:bg-white/5 px-4 py-2.5 rounded-xl transition-all border border-white/10 flex items-center gap-2 cursor-pointer text-xs font-semibold uppercase font-mono shadow-md"
               >
                 <Minimize2 className="w-4 h-4 text-emerald-400" />
-                <span>Свернуть</span>
+                <span>Свернуть колесо</span>
               </button>
             </div>
 
@@ -772,24 +797,16 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
             <div className="flex-1 w-full max-w-5xl mx-auto flex items-center justify-center p-4">
               <div
                 ref={modalContainerRef}
-                className={`w-full max-w-[min(80vh,800px)] aspect-square relative bg-[#121417]/50 border border-white/5 rounded-[40px] p-6 md:p-10 shadow-3xl flex items-center justify-center overflow-hidden transition-colors duration-200 ${
+                className={`w-full max-w-[min(80vh,800px)] aspect-square relative bg-[#121417]/50 border border-white/5 rounded-[40px] p-6 md:p-10 shadow-3xl flex items-center justify-center overflow-hidden transition-colors duration-200 touch-none ${
                   modalIsDragging ? "cursor-grabbing" : "cursor-grab"
                 }`}
                 onMouseDown={(e) => handlePointerDown(e.clientX, e.clientY, true, e.button)}
                 onMouseMove={(e) => handlePointerMove(e.clientX, e.clientY, true)}
                 onMouseUp={() => handlePointerUp(true)}
                 onMouseLeave={() => handlePointerUp(true)}
-                onTouchStart={(e) => {
-                  if (e.touches.length === 1) {
-                    handlePointerDown(e.touches[0].clientX, e.touches[0].clientY, true);
-                  }
-                }}
-                onTouchMove={(e) => {
-                  if (e.touches.length === 1) {
-                    handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, true);
-                  }
-                }}
-                onTouchEnd={() => handlePointerUp(true)}
+                onTouchStart={(e) => handleTouchStart(e, true)}
+                onTouchMove={(e) => handleTouchMove(e, true)}
+                onTouchEnd={() => handleTouchEnd(true)}
                 onDoubleClick={() => handleResetZoom(true)}
                 title="Дважды кликните, чтобы сбросить масштаб"
               >
@@ -853,26 +870,6 @@ export const FlavorWheel: React.FC<FlavorWheelProps> = ({
                 </AnimatePresence>
 
               </div>
-            </div>
-
-            {/* Modal Info Footer */}
-            <div className="w-full max-w-5xl mx-auto border-t border-white/5 pt-4 text-center text-xs text-slate-500 shrink-0 flex flex-col sm:flex-row justify-between items-center gap-3">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-slate-600">Колесо Вкусов • Клавиша ESC для выхода</span>
-              {activeFilter || selectedTea ? (
-                <div className="flex items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-xl text-emerald-400 font-mono text-xs">
-                  <span>Активен: <strong>{activeFilter || selectedTea?.name}</strong></span>
-                  <button 
-                    onClick={() => { onSelectFilter(null); }} 
-                    className="hover:text-white px-1.5 py-0.5 bg-emerald-500/20 rounded cursor-pointer text-[10px] uppercase font-bold"
-                  >
-                    Сбросить
-                  </button>
-                </div>
-              ) : (
-                <p className="max-w-md text-right text-[11px] text-slate-500 font-sans">
-                  Кликайте на сектора для прямой фильтрации журнала завариваний на лету.
-                </p>
-              )}
             </div>
           </motion.div>
         )}

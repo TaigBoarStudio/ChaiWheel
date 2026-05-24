@@ -3,7 +3,7 @@ export interface Tea {
   name: string;
   type: string; // e.g. "Шу Пуэр", "Улун", "Зеленый"
   origin: string; // Произхождение
-  year: number; // Год урожая
+  year: number | string; // Год урожая или прочерк
   producer: string; // Производитель (например DaoChai, etc.)
   rating: number; // 1-5 звезд
   brewTemp: number; // Температура заваривания

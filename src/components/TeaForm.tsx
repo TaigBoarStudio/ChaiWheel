@@ -21,7 +21,7 @@ export const TeaForm: React.FC<TeaFormProps> = ({
   const [type, setType] = useState("Шу Пуэр");
   const [author, setAuthor] = useState("Александр"); // "Александр" or "Дмитрий"
   const [origin, setOrigin] = useState("");
-  const [year, setYear] = useState<number | "">(new Date().getFullYear());
+  const [year, setYear] = useState<string>(String(new Date().getFullYear()));
   const [producer, setProducer] = useState("");
   const [rating, setRating] = useState(5);
   const [brewTemp, setBrewTemp] = useState<number>(95);
@@ -72,11 +72,15 @@ export const TeaForm: React.FC<TeaFormProps> = ({
 
     if (!origin.trim()) newErrors.origin = "Происхождение (регион) обязательно для заполнения";
 
-    const currentYear = new Date().getFullYear();
-    if (year === "" || Number.isNaN(year)) {
-      newErrors.year = "Год урожая обязателен";
-    } else if (Number(year) < 1800 || Number(year) > currentYear + 1) {
-      newErrors.year = `Введите корректный год (1800 - ${currentYear + 1})`;
+    const trimmedYear = String(year).trim();
+    if (!trimmedYear) {
+      newErrors.year = "Год урожая обязателен (или введите прочерк '-')";
+    } else if (trimmedYear !== "-") {
+      const numYear = Number(trimmedYear);
+      const currentYear = new Date().getFullYear();
+      if (isNaN(numYear) || numYear < 1800 || numYear > currentYear + 1) {
+        newErrors.year = `Введите корректный год (1800 - ${currentYear + 1}) или '-'`;
+      }
     }
 
     if (brewTemp < 50 || brewTemp > 100) {
@@ -106,7 +110,7 @@ export const TeaForm: React.FC<TeaFormProps> = ({
       name: name.trim(),
       type,
       origin: origin.trim(),
-      year: Number(year),
+      year: isNaN(Number(year)) ? (String(year).trim() || "-") : Number(year),
       producer: producer.trim() || "Неизвестен",
       rating,
       brewTemp,
@@ -230,16 +234,26 @@ export const TeaForm: React.FC<TeaFormProps> = ({
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-mono uppercase text-slate-400 mb-1.5 font-semibold">
-                  Год сбора <span className="text-red-400">*</span>
-                </label>
+               <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-mono uppercase text-slate-400 font-semibold animate-none">
+                    Год сбора <span className="text-red-400">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setYear("-")}
+                    className="text-[10px] font-mono uppercase text-emerald-400 hover:text-emerald-300 transition-colors border border-emerald-500/20 rounded px-1.5 py-0.5 bg-emerald-500/5 cursor-pointer select-none"
+                  >
+                    Прочерк (-)
+                  </button>
+                </div>
                 <input
-                  type="number"
-                  value={year === "" ? "" : year}
-                  onChange={e => setYear(e.target.value === "" ? "" : Number(e.target.value))}
-                  placeholder="2026"
-                  className={`w-full bg-[#1C1F24] border ${errors.year ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-650 focus:outline-none focus:border-emerald-500/40`}
+                  type="text"
+                  value={year}
+                  onChange={e => setYear(e.target.value)}
+                  placeholder="2026 или -"
+                  maxLength={10}
+                  className={`w-full bg-[#1C1F24] border ${errors.year ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40`}
                 />
               </div>
             </div>

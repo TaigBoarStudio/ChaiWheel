@@ -183,7 +183,9 @@ export default function App() {
           return b.rating - a.rating;
         }
         if (sortBy === "year") {
-          return b.year - a.year;
+          const yA = typeof a.year === "number" ? a.year : parseInt(String(a.year)) || 0;
+          const yB = typeof b.year === "number" ? b.year : parseInt(String(b.year)) || 0;
+          return yB - yA;
         }
         return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
       });
@@ -716,7 +718,7 @@ export default function App() {
                                 </span>
                               )}
                               <span className="text-[10px] text-slate-500 font-mono">
-                                {tea.year} год
+                                {String(tea.year).trim() === "-" || !tea.year ? "—" : `${tea.year} год`}
                               </span>
                             </div>
                             <h3 className="text-base font-bold text-slate-200 group-hover:text-emerald-400 transition-colors truncate">

@@ -73,7 +73,9 @@ export const TeaDetail: React.FC<TeaDetailProps> = ({ tea, onClose, onClearSelec
             <Calendar className="w-4 h-4 text-emerald-450 shrink-0" />
             <div>
               <span className="text-slate-500 block text-[10px] uppercase font-mono tracking-wider">Год урожая</span>
-              <span className="text-slate-200 font-medium">{tea.year} год</span>
+              <span className="text-slate-200 font-medium">
+                {String(tea.year).trim() === "-" || !tea.year ? "—" : `${tea.year} год`}
+              </span>
             </div>
           </div>
 
