@@ -1,0 +1,6 @@
+{
+  "name": "Колесо Ароматов Чая",
+  "description": "Интерактивный журнал дегустаций чая с колесом вкусов и синхронизацией с Google Таблицами",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
