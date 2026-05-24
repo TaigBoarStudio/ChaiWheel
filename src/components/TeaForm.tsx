@@ -19,6 +19,7 @@ export const TeaForm: React.FC<TeaFormProps> = ({
   // Form values state
   const [name, setName] = useState("");
   const [type, setType] = useState("Шу Пуэр");
+  const [author, setAuthor] = useState("Александр"); // "Александр" or "Дмитрий"
   const [origin, setOrigin] = useState("");
   const [year, setYear] = useState<number | "">(new Date().getFullYear());
   const [producer, setProducer] = useState("");
@@ -112,7 +113,8 @@ export const TeaForm: React.FC<TeaFormProps> = ({
       brewTime: brewTime.trim() || `${brewTemp > 90 ? "15-30" : "10-25"} сек`,
       flavors: selectedFlavors,
       notes: notes.trim(),
-      dateAdded: new Date().toISOString()
+      dateAdded: new Date().toISOString(),
+      author
     };
 
     onAddTea(newTea);
@@ -172,6 +174,33 @@ export const TeaForm: React.FC<TeaFormProps> = ({
           {/* LEFT COLUMN - TEXT FIELDS */}
           <div className="space-y-4">
             
+            <div>
+              <label className="block text-xs font-mono uppercase text-slate-400 mb-1.5 font-semibold">
+                Кто дегустирует <span className="text-red-400">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {["Александр", "Дмитрий"].map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setAuthor(u)}
+                    className={`px-4 py-2.5 rounded-xl border text-xs font-semibold uppercase font-mono tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      author === u
+                        ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400 shadow-md"
+                        : "bg-[#1C1F24] border-white/5 hover:border-emerald-500/35 text-slate-400"
+                    }`}
+                  >
+                    <span 
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        author === u ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)] scale-110" : "bg-slate-700"
+                      }`} 
+                    />
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-mono uppercase text-slate-400 mb-1.5 font-semibold">
                 Название чая <span className="text-red-400">*</span>

@@ -25,9 +25,16 @@ export const TeaDetail: React.FC<TeaDetailProps> = ({ tea, onClose, onClearSelec
 
       {/* Title block */}
       <div className="mb-6 border-b border-white/5 pb-5 pr-10">
-        <span className="text-[10px] font-mono font-bold tracking-widest px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg uppercase">
-          {tea.type}
-        </span>
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-[10px] font-mono font-bold tracking-widest px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg uppercase">
+            {tea.type}
+          </span>
+          {tea.author && (
+            <span className="text-[10px] font-mono font-bold tracking-widest px-2.5 py-1 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-lg uppercase">
+              Оценил: {tea.author}
+            </span>
+          )}
+        </div>
         <h2 className="text-xl md:text-2xl font-bold text-white mt-3 font-sans tracking-tight">
           {tea.name}
         </h2>

@@ -28,7 +28,8 @@ function doGet(e) {
          brewTime: String(row[8] || ''),
          flavors: row[9] ? String(row[9]).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [],
          notes: String(row[10] || ''),
-         dateAdded: String(row[11] || '')
+         dateAdded: String(row[11] || ''),
+         author: String(row[12] || '')
        };
        teas.push(tea);
     }
@@ -48,7 +49,7 @@ function doPost(e) {
       sheet.appendRow([
         "ID", "Название", "Категория", "Происхождение", "Год урожая", 
         "Производитель", "Оценка (1-5)", "Температура", "Время", 
-        "Вкусы (через запятую)", "Заметки", "Дата добавления"
+        "Вкусы (через запятую)", "Заметки", "Дата добавления", "Дегустатор"
       ]);
     }
     
@@ -69,7 +70,8 @@ function doPost(e) {
       postData.brewTime || "",
       flavorsStr,
       postData.notes || "",
-      postData.dateAdded || new Date().toISOString()
+      postData.dateAdded || new Date().toISOString(),
+      postData.author || ""
     ]);
     
     return ContentService.createTextOutput(JSON.stringify({ status: "success", id: id }))
@@ -134,7 +136,12 @@ export const fetchTeas = async (config: GoogleSheetsConfig, fallbackTeas: Tea[])
   const localTeas = localStorage.getItem("local_tasting_teas");
   if (localTeas) {
     try {
-      return { teas: JSON.parse(localTeas), fromSheets: false };
+      const parsed = JSON.parse(localTeas);
+      if (Array.isArray(parsed)) {
+        // Filter out preset/mock teas so they do not show up and mislead the user
+        const filtered = parsed.filter((t: Tea) => !["tea_1", "tea_2", "tea_3", "tea_4", "tea_5", "tea_6", "tea_7"].includes(t.id));
+        return { teas: filtered, fromSheets: false };
+      }
     } catch (_) {
       // Ignored
     }

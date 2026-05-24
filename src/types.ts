@@ -11,6 +11,7 @@ export interface Tea {
   flavors: string[]; // List of flavor IDs or names matching the wheel
   notes: string; // Заметки / описание
   dateAdded: string; // Дата дегустации
+  author?: string; // Александр / Дмитрий
 }
 
 export interface FlavorWheelItem {

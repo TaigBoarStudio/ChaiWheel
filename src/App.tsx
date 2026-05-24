@@ -44,6 +44,7 @@ export default function App() {
   // Filtering, Searching & Sorting States
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("all");
+  const [selectedAuthorFilter, setSelectedAuthorFilter] = useState("all");
   const [activeWheelFilter, setActiveWheelFilter] = useState<string | null>(null); // flavor or category selected on wheel
   const [sortBy, setSortBy] = useState<"date" | "rating" | "year">("date");
   const [hoveredWheelItem, setHoveredWheelItem] = useState<string | null>(null);
@@ -157,7 +158,10 @@ export default function App() {
         // 2. Class Type Dropdown Filter
         const matchesType = selectedTypeFilter === "all" || tea.type === selectedTypeFilter;
 
-        // 3. Wheel filter (Category click or Aroma click)
+        // 3. Reviewer/Author Filter
+        const matchesAuthor = selectedAuthorFilter === "all" || tea.author === selectedAuthorFilter;
+
+        // 4. Wheel filter (Category click or Aroma click)
         let matchesWheel = true;
         if (activeWheelFilter) {
           // Check if activeWheelFilter is a category name
@@ -171,7 +175,7 @@ export default function App() {
           }
         }
 
-        return matchesSearch && matchesType && matchesWheel;
+        return matchesSearch && matchesType && matchesWheel && matchesAuthor;
       })
       .sort((a, b) => {
         // Sorting criteria
@@ -592,6 +596,30 @@ export default function App() {
                       </div>
                     </div>
 
+                    {/* Degustator filter switcher */}
+                    <div className="flex flex-wrap items-center gap-2 bg-[#1C1F24]/30 p-2 border border-white/5 rounded-xl">
+                      <span className="text-slate-400 font-mono pl-1 shrink-0">Дегустатор:</span>
+                      <div className="flex bg-[#121417]/80 p-0.5 rounded-lg border border-white/5 shrink-0">
+                        {[
+                          { id: "all", label: "Все" },
+                          { id: "Александр", label: "Александр" },
+                          { id: "Дмитрий", label: "Дмитрий" }
+                        ].map(user => (
+                          <button
+                            key={user.id}
+                            onClick={() => setSelectedAuthorFilter(user.id)}
+                            className={`px-3.5 py-1 rounded-md transition-all text-[11px] font-semibold cursor-pointer ${
+                              selectedAuthorFilter === user.id
+                                ? "bg-sky-500/15 text-sky-400 font-bold border border-sky-500/20 shadow-sm"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            {user.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Second line: Sorting buttons & custom labels */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-t border-white/5 pt-3">
                       
@@ -682,6 +710,11 @@ export default function App() {
                               <span className="text-[10px] font-mono uppercase bg-[#1C1F24] border border-white/5 px-2 py-0.5 rounded text-slate-400 font-bold">
                                 {tea.type}
                               </span>
+                              {tea.author && (
+                                <span className="text-[9px] font-mono uppercase bg-sky-500/10 border border-sky-500/20 px-1.5 py-0.5 rounded text-sky-400 font-bold">
+                                  {tea.author}
+                                </span>
+                              )}
                               <span className="text-[10px] text-slate-500 font-mono">
                                 {tea.year} год
                               </span>
